@@ -1,0 +1,486 @@
+{% extends "base.html" %}
+
+{% block title %}Monitoramento{% endblock %}
+{% block page_title %}Monitoramento em Tempo Real - {{ salas[sala_atual].nome }}{% endblock %}
+
+{% block content %}
+<style>
+    .sala-selector {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .sala-selector label {
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 600;
+    }
+    
+    .sala-selector select {
+        flex: 1;
+        padding: 10px 15px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 14px;
+        cursor: pointer;
+    }
+    
+    .sala-selector select option {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+    
+    .btn-export {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #00e676, #00c853);
+        border: none;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+        text-decoration: none;
+    }
+    
+    .btn-export:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 230, 118, 0.3);
+    }
+    
+    .monitor-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .monitor-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .monitor-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: var(--gradient-cyan);
+    }
+    
+    .monitor-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+    }
+    
+    .monitor-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .monitor-status {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .monitor-status.online { color: var(--accent-green); }
+    .monitor-status.offline { color: var(--accent-red); }
+    
+    .metric-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    
+    .metric {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+    }
+    
+    .metric-label {
+        font-size: 10px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+    
+    .metric-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+        font-family: 'Courier New', monospace;
+    }
+    
+    .metric-value.corrente { color: var(--accent-cyan); }
+    .metric-value.tensao { color: var(--accent-yellow); }
+    .metric-value.potencia { color: var(--accent-green); }
+    .metric-value.temp { color: var(--accent-orange); }
+    
+    .metric-unit {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+    
+    /* GRÁFICOS NO FINAL */
+    .charts-section {
+        margin-top: 30px;
+    }
+    
+    .charts-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .charts-title i {
+        color: var(--accent-cyan);
+    }
+    
+    .charts-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .chart-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+    }
+    
+    .chart-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+    
+    .chart-header i {
+        color: var(--accent-cyan);
+        font-size: 16px;
+    }
+    
+    .chart-header h4 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 280px;
+    }
+    
+    @media (max-width: 768px) {
+        .charts-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- SELETOR DE SALAS -->
+<div class="sala-selector">
+    <label><i class="fas fa-building"></i> SELECIONAR SALA:</label>
+    <select onchange="mudarSala(this.value)">
+        {% for sala_id, sala in salas.items() %}
+        <option value="{{ sala_id }}" {% if sala_id == sala_atual %}selected{% endif %}>
+            {{ sala.nome }} - {{ sala.bloco }}
+        </option>
+        {% endfor %}
+    </select>
+    <a href="/api/relatorio?sala={{ sala_atual }}" class="btn-export">
+        <i class="fas fa-file-excel"></i> Exportar CSV
+    </a>
+</div>
+
+<!-- CARDS DE EQUIPAMENTOS (PRIMEIRO) -->
+<div class="monitor-grid">
+    {% for categoria, equipamentos_list in equipamentos.items() %}
+        {% for equip in equipamentos_list %}
+        <div class="monitor-card">
+            <div class="monitor-header">
+                <div class="monitor-title">
+                    <i class="fas fa-microchip"></i> {{ equip.nome }}
+                </div>
+                <div class="monitor-status {% if equip.estado %}online{% else %}offline{% endif %}">
+                    <div class="estado-dot" style="width:8px;height:8px;border-radius:50%;background:{% if equip.estado %}var(--accent-green){% else %}var(--accent-red){% endif %};box-shadow:0 0 5px {% if equip.estado %}var(--accent-green){% else %}var(--accent-red){% endif %}"></div>
+                    {{ 'ONLINE' if equip.estado else 'OFFLINE' }}
+                </div>
+            </div>
+            
+            <div class="metric-grid">
+                <div class="metric">
+                    <div class="metric-label">Corrente</div>
+                    <div class="metric-value corrente">{{ "%.1f"|format(equip.corrente) }} <span class="metric-unit">A</span></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Tensão</div>
+                    <div class="metric-value tensao">{{ equip.tensao|int }} <span class="metric-unit">V</span></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Potência</div>
+                    <div class="metric-value potencia">{{ equip.potencia|int }} <span class="metric-unit">W</span></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Temperatura</div>
+                    <div class="metric-value temp">
+                        {% if equip.temperatura %}
+                            {{ "%.1f"|format(equip.temperatura) }} <span class="metric-unit">°C</span>
+                        {% else %}
+                            -- <span class="metric-unit">°C</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top:15px;display:flex;gap:10px;">
+                <button class="acao-btn {% if equip.estado %}btn-desligar{% else %}btn-ligar{% endif %}" 
+                        onclick="alternarEquipamento('{{ equip.id }}', this)" style="flex:1;justify-content:center;">
+                    <i class="fas fa-power-off"></i>
+                    {{ 'DESLIGAR' if equip.estado else 'LIGAR' }}
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    {% endfor %}
+</div>
+
+<!-- GRÁFICOS DE BARRA (NO FINAL - PARTE INFERIOR) -->
+<div class="charts-section">
+    <div class="charts-title">
+        <i class="fas fa-chart-bar"></i>
+        GRÁFICOS DE GRANDEZAS ELÉTRICAS
+    </div>
+    
+    <div class="charts-row">
+        <div class="chart-card">
+            <div class="chart-header">
+                <i class="fas fa-bolt"></i>
+                <h4>CORRENTE, TENSÃO E POTÊNCIA POR EQUIPAMENTO</h4>
+            </div>
+            <div class="chart-container">
+                <canvas id="graficoBarras"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-card">
+            <div class="chart-header">
+                <i class="fas fa-wave-square"></i>
+                <h4>FREQUÊNCIA E TEMPERATURA DOS EQUIPAMENTOS</h4>
+            </div>
+            <div class="chart-container">
+                <canvas id="graficoFrequencia"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Preparar dados para gráficos
+const equipamentosData = [];
+{% for categoria, equipamentos_list in equipamentos.items() %}
+    {% for equip in equipamentos_list %}
+    equipamentosData.push({
+        nome: "{{ equip.nome }}",
+        corrente: {{ equip.corrente }},
+        tensao: {{ equip.tensao }},
+        potencia: {{ equip.potencia }},
+        temperatura: {% if equip.temperatura %}{{ equip.temperatura }}{% else %}0{% endif %},
+        frequencia: {{ equip.frequencia }},
+        estado: {{ 'true' if equip.estado else 'false' }}
+    });
+    {% endfor %}
+{% endfor %}
+
+// Gráfico de Barras - Corrente, Tensão e Potência
+const ctxBarras = document.getElementById('graficoBarras').getContext('2d');
+new Chart(ctxBarras, {
+    type: 'bar',
+    data: {
+        labels: equipamentosData.map(e => e.nome.length > 20 ? e.nome.substring(0,20)+'...' : e.nome),
+        datasets: [{
+            label: 'Corrente (A)',
+            data: equipamentosData.map(e => e.corrente),
+            backgroundColor: 'rgba(0, 212, 255, 0.8)',
+            borderColor: '#00d4ff',
+            borderWidth: 1,
+            borderRadius: 4
+        }, {
+            label: 'Tensão (V) / 10',
+            data: equipamentosData.map(e => e.tensao / 10),
+            backgroundColor: 'rgba(255, 214, 0, 0.8)',
+            borderColor: '#ffd600',
+            borderWidth: 1,
+            borderRadius: 4
+        }, {
+            label: 'Potência (W) / 100',
+            data: equipamentosData.map(e => e.potencia / 100),
+            backgroundColor: 'rgba(0, 230, 118, 0.8)',
+            borderColor: '#00e676',
+            borderWidth: 1,
+            borderRadius: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { 
+                labels: { color: '#8b9bb4', font: { size: 11 } },
+                position: 'top'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) label += ': ';
+                        if (context.dataset.label.includes('Tensão')) {
+                            return label + (context.raw * 10).toFixed(0) + ' V';
+                        } else if (context.dataset.label.includes('Potência')) {
+                            return label + (context.raw * 100).toFixed(0) + ' W';
+                        }
+                        return label + context.raw.toFixed(1) + ' A';
+                    }
+                }
+            }
+        },
+        scales: {
+            x: { 
+                ticks: { color: '#5a6a8a', font: { size: 10 } },
+                grid: { color: 'rgba(255,255,255,0.05)' }
+            },
+            y: { 
+                ticks: { color: '#5a6a8a' },
+                grid: { color: 'rgba(255,255,255,0.05)' },
+                title: {
+                    display: true,
+                    text: 'Valores Normalizados',
+                    color: '#5a6a8a',
+                    font: { size: 11 }
+                }
+            }
+        }
+    }
+});
+
+// Gráfico de Frequência e Temperatura
+const ctxFreq = document.getElementById('graficoFrequencia').getContext('2d');
+new Chart(ctxFreq, {
+    type: 'bar',
+    data: {
+        labels: equipamentosData.map(e => e.nome.length > 20 ? e.nome.substring(0,20)+'...' : e.nome),
+        datasets: [{
+            label: 'Frequência (Hz)',
+            data: equipamentosData.map(e => e.frequencia),
+            backgroundColor: 'rgba(156, 39, 176, 0.8)',
+            borderColor: '#9c27b0',
+            borderWidth: 1,
+            borderRadius: 4,
+            yAxisID: 'y'
+        }, {
+            label: 'Temperatura (°C)',
+            data: equipamentosData.map(e => e.temperatura),
+            backgroundColor: 'rgba(255, 145, 0, 0.8)',
+            borderColor: '#ff9100',
+            borderWidth: 1,
+            borderRadius: 4,
+            yAxisID: 'y1'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { 
+                labels: { color: '#8b9bb4', font: { size: 11 } },
+                position: 'top'
+            }
+        },
+        scales: {
+            x: { 
+                ticks: { color: '#5a6a8a', font: { size: 10 } },
+                grid: { color: 'rgba(255,255,255,0.05)' }
+            },
+            y: { 
+                type: 'linear',
+                display: true,
+                position: 'left',
+                ticks: { color: '#9c27b0' },
+                grid: { color: 'rgba(255,255,255,0.05)' },
+                title: {
+                    display: true,
+                    text: 'Frequência (Hz)',
+                    color: '#9c27b0',
+                    font: { size: 11 }
+                }
+            },
+            y1: { 
+                type: 'linear',
+                display: true,
+                position: 'right',
+                ticks: { color: '#ff9100' },
+                grid: { drawOnChartArea: false },
+                title: {
+                    display: true,
+                    text: 'Temperatura (°C)',
+                    color: '#ff9100',
+                    font: { size: 11 }
+                }
+            }
+        }
+    }
+});
+
+function mudarSala(salaId) {
+    window.location.href = '/monitoramento?sala=' + salaId;
+}
+
+function alternarEquipamento(equipId, btn) {
+    fetch(`/api/alternar/${equipId}?sala={{ sala_atual }}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.sucesso) {
+                location.reload();
+            }
+        })
+        .catch(error => console.error('Erro:', error));
+}
+</script>
+{% endblock %}

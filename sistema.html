@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Sistema{% endblock %}
+{% block page_title %}Informações do Sistema{% endblock %}
+
+{% block content %}
+<style>
+    .sys-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .sys-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 25px;
+    }
+    
+    .sys-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .sys-title i {
+        color: var(--accent-cyan);
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 13px;
+    }
+    
+    .info-label {
+        color: var(--text-secondary);
+    }
+    
+    .info-value {
+        color: var(--text-primary);
+        font-weight: 500;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .log-mini {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .log-mini-item {
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 12px;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .log-mini-time {
+        color: var(--text-muted);
+        white-space: nowrap;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .log-mini-msg {
+        color: var(--text-secondary);
+    }
+    
+    .health-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 4px;
+        margin-top: 10px;
+        overflow: hidden;
+    }
+    
+    .health-fill {
+        height: 100%;
+        border-radius: 4px;
+        background: var(--gradient-green);
+        transition: width 0.5s ease;
+    }
+</style>
+
+<div class="sys-grid">
+    <div class="sys-card">
+        <div class="sys-title">
+            <i class="fas fa-server"></i>
+            INFORMAÇÕES DO SISTEMA
+        </div>
+        
+        <div class="info-row">
+            <span class="info-label">Nome do Sistema</span>
+            <span class="info-value">{{ sistema_nome }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Versão</span>
+            <span class="info-value">{{ versao }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Instituição</span>
+            <span class="info-value">{{ universidade }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Departamento</span>
+            <span class="info-value">{{ faculdade }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Framework</span>
+            <span class="info-value">Flask 3.0.3</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Python</span>
+            <span class="info-value">3.12+</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Ambiente</span>
+            <span class="info-value">Produção</span>
+        </div>
+    </div>
+    
+    <div class="sys-card">
+        <div class="sys-title">
+            <i class="fas fa-heartbeat"></i>
+            SAÚDE DO SISTEMA
+        </div>
+        
+        <div style="margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                <span style="font-size:12px;color:var(--text-secondary);">CPU</span>
+                <span style="font-size:12px;color:var(--accent-green);">12%</span>
+            </div>
+            <div class="health-bar">
+                <div class="health-fill" style="width:12%"></div>
+            </div>
+        </div>
+        
+        <div style="margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                <span style="font-size:12px;color:var(--text-secondary);">Memória RAM</span>
+                <span style="font-size:12px;color:var(--accent-green);">34%</span>
+            </div>
+            <div class="health-bar">
+                <div class="health-fill" style="width:34%"></div>
+            </div>
+        </div>
+        
+        <div style="margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                <span style="font-size:12px;color:var(--text-secondary);">Disco</span>
+                <span style="font-size:12px;color:var(--accent-yellow);">67%</span>
+            </div>
+            <div class="health-bar">
+                <div class="health-fill" style="width:67%;background:var(--gradient-yellow)"></div>
+            </div>
+        </div>
+        
+        <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                <span style="font-size:12px;color:var(--text-secondary);">Uptime</span>
+                <span style="font-size:12px;color:var(--accent-cyan);">99.8%</span>
+            </div>
+            <div class="health-bar">
+                <div class="health-fill" style="width:99.8%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section-card" style="margin-top:20px;">
+    <div class="section-header">
+        <div class="section-title">
+            <div class="section-icon icon-climatizacao">
+                <i class="fas fa-terminal"></i>
+            </div>
+            <div>
+                <h3>LOGS DO SISTEMA</h3>
+                <span>Últimos 50 eventos registrados</span>
+            </div>
+        </div>
+    </div>
+    <div class="log-mini" style="padding:15px 25px;">
+        {% for log in logs|reverse %}
+        <div class="log-mini-item">
+            <span class="log-mini-time">{{ log.data }}</span>
+            <span class="log-mini-msg">{{ log.mensagem }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

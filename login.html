@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Sistema Embarcado - UniRovuma</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0a0e27;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background animado */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 230, 118, 0.02) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(255, 23, 68, 0.02) 0%, transparent 50%);
+            animation: bgMove 30s ease-in-out infinite;
+        }
+
+        @keyframes bgMove {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-5%, -5%); }
+        }
+
+        /* Partículas flutuantes */
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(0, 212, 255, 0.3);
+            border-radius: 50%;
+            animation: float 15s infinite;
+        }
+
+        .particle:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; }
+        .particle:nth-child(2) { left: 20%; top: 80%; animation-delay: 2s; }
+        .particle:nth-child(3) { left: 50%; top: 10%; animation-delay: 4s; }
+        .particle:nth-child(4) { left: 70%; top: 60%; animation-delay: 6s; }
+        .particle:nth-child(5) { left: 90%; top: 30%; animation-delay: 8s; }
+        .particle:nth-child(6) { left: 30%; top: 50%; animation-delay: 10s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+            50% { transform: translateY(-100px) scale(1.5); opacity: 0.8; }
+        }
+
+        /* Container principal */
+        .login-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: rgba(17, 25, 54, 0.95);
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            border-radius: 24px;
+            padding: 40px 35px;
+            box-shadow: 
+                0 25px 80px rgba(0, 0, 0, 0.6),
+                0 0 60px rgba(0, 212, 255, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00d4ff, #00e676, #00d4ff);
+            background-size: 200% 100%;
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Logo da Universidade */
+        .brand-section {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .uni-logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 15px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid rgba(0, 212, 255, 0.3);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .uni-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .brand-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 5px;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .brand-subtitle {
+            font-size: 13px;
+            color: #8b9bb4;
+            line-height: 1.5;
+        }
+
+        .brand-subtitle span {
+            display: block;
+        }
+
+        /* Info Universidade */
+        .uni-info {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 12px;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .uni-info h4 {
+            color: #00d4ff;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .uni-info span {
+            color: #5a6a8a;
+            font-size: 11px;
+        }
+
+        /* Formulário */
+        .login-form {
+            margin-top: 20px;
+        }
+
+        .input-wrapper {
+            margin-bottom: 18px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(10, 14, 39, 0.8);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .input-wrapper input::placeholder {
+            color: #5a6a8a;
+        }
+
+        .input-wrapper input:focus {
+            border-color: #00d4ff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);
+        }
+
+        .input-wrapper input[type="password"] {
+            background: #e8ecf4;
+            color: #0a0e27;
+            border-color: transparent;
+        }
+
+        .input-wrapper input[type="password"]::placeholder {
+            color: #8b9bb4;
+        }
+
+        .input-wrapper input[type="password"]:focus {
+            background: #fff;
+        }
+
+        /* Botão Entrar */
+        .btn-entrar {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            border: none;
+            border-radius: 12px;
+            color: #0a0e27;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-entrar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(0, 212, 255, 0.4);
+        }
+
+        /* Links extras */
+        .login-extras {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            font-size: 12px;
+        }
+
+        .login-extras a {
+            color: #5a6a8a;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .login-extras a:hover {
+            color: #00d4ff;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #5a6a8a;
+            cursor: pointer;
+        }
+
+        .remember-me input {
+            width: 14px;
+            height: 14px;
+            accent-color: #00d4ff;
+        }
+
+        /* Footer */
+        .login-footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .login-footer p {
+            color: #5a6a8a;
+            font-size: 11px;
+            margin-bottom: 8px;
+        }
+
+        .login-footer a {
+            color: #00d4ff;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .login-footer a:hover {
+            color: #fff;
+        }
+
+        /* Flash messages */
+        .flash-messages {
+            margin-bottom: 15px;
+        }
+
+        .alert {
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-success {
+            background: rgba(0, 230, 118, 0.1);
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            color: #00e676;
+        }
+
+        .alert-danger {
+            background: rgba(255, 23, 68, 0.1);
+            border: 1px solid rgba(255, 23, 68, 0.3);
+            color: #ff1744;
+        }
+
+        .alert-warning {
+            background: rgba(255, 214, 0, 0.1);
+            border: 1px solid rgba(255, 214, 0, 0.3);
+            color: #ffd600;
+        }
+
+        /* Versão */
+        .version-tag {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 10px;
+            color: rgba(90, 106, 138, 0.5);
+        }
+
+        /* Responsivo */
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 30px 20px;
+            }
+            
+            .uni-logo {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .brand-title {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Partículas animadas -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="login-wrapper">
+        <div class="login-card">
+            <!-- Logo da Universidade -->
+            <div class="brand-section">
+                <div class="uni-logo">
+                    <!-- COLOQUE A IMAGEM AQUI - SUBSTITUA O SRC -->
+                    <img src="{{ url_for('static', filename='images/unirovuma.png') }}" alt="Universidade Rovuma">
+                <h1 class="brand-title">UniRovuma</h1>
+                <div class="brand-subtitle">
+                    <span>Sistema Embarcado</span>
+                    <span> Monitoramento da corrente Electrica</span>
+                </div>
+            </div>
+
+            <!-- Info Universidade -->
+            <div class="uni-info">
+                <h4>{{ universidade }}</h4>
+                <span>{{ faculdade }}</span>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' if category == 'warning' else 'times-circle' if category == 'danger' else 'info-circle' }}"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Formulário -->
+            <form class="login-form" method="POST" action="{{ url_for('login') }}">
+                <div class="input-wrapper">
+                    <input type="text" name="username" placeholder="Usuário" required autofocus value="daudo">
+                </div>
+                
+                <div class="input-wrapper">
+                    <input type="password" name="password" placeholder="Senha" required value="daudo">
+                </div>
+
+                <button type="submit" class="btn-entrar">
+                    Entrar
+                </button>
+            </form>
+
+            <!-- Extras -->
+            <div class="login-extras">
+                <label class="remember-me">
+                    <input type="checkbox" checked>
+                    <span>Lembrar-me</span>
+                </label>
+                <a href="#"><i class="fas fa-lock"></i> Esqueceu a senha?</a>
+            </div>
+
+            <!-- Footer -->
+            <div class="login-footer">
+                <p>Não tem uma conta?</p>
+                <a href="{{ url_for('cadastro') }}">
+                    <i class="fas fa-user-plus"></i> Solicitar acesso ao administrador
+                </a>
+            </div>
+
+            <div class="version-tag">v{{ versao or '3.3.0' }}</div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Histórico{% endblock %}
+{% block page_title %}Histórico de Eventos{% endblock %}
+
+{% block content %}
+<style>
+    .log-container {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .log-header {
+        padding: 20px 25px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .log-filters {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .log-filter {
+        padding: 8px 16px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-secondary);
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .log-filter:hover, .log-filter.active {
+        background: rgba(0,212,255,0.1);
+        border-color: var(--accent-cyan);
+        color: var(--accent-cyan);
+    }
+    
+    .log-item {
+        padding: 15px 25px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        transition: background 0.3s;
+    }
+    
+    .log-item:hover {
+        background: rgba(255,255,255,0.02);
+    }
+    
+    .log-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+    
+    .log-icon.login { background: rgba(0,212,255,0.1); color: var(--accent-cyan); }
+    .log-icon.usuario { background: rgba(0,230,118,0.1); color: var(--accent-green); }
+    .log-icon.acao { background: rgba(255,214,0,0.1); color: var(--accent-yellow); }
+    .log-icon.sistema { background: rgba(255,23,68,0.1); color: var(--accent-red); }
+    .log-icon.config { background: rgba(156,39,176,0.1); color: #9c27b0; }
+    
+    .log-content {
+        flex: 1;
+    }
+    
+    .log-message {
+        font-size: 13px;
+        color: var(--text-primary);
+        margin-bottom: 3px;
+    }
+    
+    .log-meta {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+    
+    .log-time {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-family: 'Courier New', monospace;
+        white-space: nowrap;
+    }
+    
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="section-card">
+    <div class="section-header">
+        <div class="section-title">
+            <div class="section-icon icon-climatizacao">
+                <i class="fas fa-history"></i>
+            </div>
+            <div>
+                <h3>REGISTRO DE EVENTOS</h3>
+                <span>Histórico completo de atividades do sistema</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="log-container">
+        <div class="log-header">
+            <div class="log-filters">
+                <button class="log-filter active" onclick="filterLogs('all')">Todos</button>
+                <button class="log-filter" onclick="filterLogs('login')">Login</button>
+                <button class="log-filter" onclick="filterLogs('acao')">Ações</button>
+                <button class="log-filter" onclick="filterLogs('sistema')">Sistema</button>
+            </div>
+        </div>
+        
+        {% if logs %}
+            {% for log in logs|reverse %}
+            <div class="log-item" data-type="{{ log.tipo }}">
+                <div class="log-icon {{ log.tipo }}">
+                    {% if log.tipo == 'login' %}
+                        <i class="fas fa-user"></i>
+                    {% elif log.tipo == 'usuario' %}
+                        <i class="fas fa-user-plus"></i>
+                    {% elif log.tipo == 'acao' %}
+                        <i class="fas fa-power-off"></i>
+                    {% elif log.tipo == 'sistema' %}
+                        <i class="fas fa-server"></i>
+                    {% elif log.tipo == 'config' %}
+                        <i class="fas fa-cog"></i>
+                    {% else %}
+                        <i class="fas fa-info"></i>
+                    {% endif %}
+                </div>
+                <div class="log-content">
+                    <div class="log-message">{{ log.mensagem }}</div>
+                    <div class="log-meta">Tipo: {{ log.tipo|upper }}</div>
+                </div>
+                <div class="log-time">{{ log.data }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>Nenhum evento registrado</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function filterLogs(type) {
+    const items = document.querySelectorAll('.log-item');
+    const buttons = document.querySelectorAll('.log-filter');
+    
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    items.forEach(item => {
+        if (type === 'all' || item.dataset.type === type) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

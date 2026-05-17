@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}Alarmes{% endblock %}
+{% block page_title %}Central de Alarmes{% endblock %}
+
+{% block content %}
+<style>
+    .alarmes-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .alarm-stat-box {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .alarm-stat-box.critico {
+        border-left: 4px solid var(--accent-red);
+    }
+    
+    .alarm-stat-box.atencao {
+        border-left: 4px solid var(--accent-yellow);
+    }
+    
+    .alarm-stat-box.resolvido {
+        border-left: 4px solid var(--accent-green);
+    }
+    
+    .alarm-stat-value {
+        font-size: 36px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    
+    .alarm-stat-value.critico { color: var(--accent-red); }
+    .alarm-stat-value.atencao { color: var(--accent-yellow); }
+    .alarm-stat-value.resolvido { color: var(--accent-green); }
+    
+    .alarm-stat-label {
+        font-size: 11px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .alarm-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        transition: all 0.3s;
+    }
+    
+    .alarm-card:hover {
+        background: rgba(255,255,255,0.02);
+    }
+    
+    .alarm-card.critico {
+        border-left: 4px solid var(--accent-red);
+    }
+    
+    .alarm-card.atencao {
+        border-left: 4px solid var(--accent-yellow);
+    }
+    
+    .alarm-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+    
+    .alarm-icon.critico {
+        background: rgba(255,23,68,0.15);
+        color: var(--accent-red);
+    }
+    
+    .alarm-icon.atencao {
+        background: rgba(255,214,0,0.15);
+        color: var(--accent-yellow);
+    }
+    
+    .alarm-content {
+        flex: 1;
+    }
+    
+    .alarm-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 5px;
+    }
+    
+    .alarm-desc {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-bottom: 3px;
+    }
+    
+    .alarm-meta {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+    
+    .alarm-meta span {
+        margin-right: 15px;
+    }
+    
+    .alarm-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    
+    .alarm-badge.critico {
+        background: rgba(255,23,68,0.15);
+        color: var(--accent-red);
+    }
+    
+    .alarm-badge.atencao {
+        background: rgba(255,214,0,0.15);
+        color: var(--accent-yellow);
+    }
+    
+    .alarm-time {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-family: 'Courier New', monospace;
+        white-space: nowrap;
+    }
+    
+    .empty-alarmes {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+    
+    .empty-alarmes i {
+        font-size: 64px;
+        color: var(--accent-green);
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+    
+    .empty-alarmes h3 {
+        color: var(--text-primary);
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+    
+    .btn-ack {
+        padding: 8px 16px;
+        background: transparent;
+        border: 1px solid var(--accent-green);
+        border-radius: 6px;
+        color: var(--accent-green);
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .btn-ack:hover {
+        background: rgba(0,230,118,0.1);
+    }
+</style>
+
+<div class="alarmes-stats">
+    <div class="alarm-stat-box critico">
+        <div class="alarm-stat-value critico">{{ total_critico }}</div>
+        <div class="alarm-stat-label">Críticos</div>
+    </div>
+    <div class="alarm-stat-box atencao">
+        <div class="alarm-stat-value atencao">{{ total_atencao }}</div>
+        <div class="alarm-stat-label">Atenção</div>
+    </div>
+    <div class="alarm-stat-box resolvido">
+        <div class="alarm-stat-value resolvido">0</div>
+        <div class="alarm-stat-label">Resolvidos Hoje</div>
+    </div>
+</div>
+
+<div class="section-card">
+    <div class="section-header">
+        <div class="section-title">
+            <div class="section-icon" style="background:rgba(255,23,68,0.1);color:var(--accent-red);">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div>
+                <h3>ALARMES ATIVOS</h3>
+                <span>Notificações que requerem atenção imediata</span>
+            </div>
+        </div>
+    </div>
+    
+    <div style="padding: 20px;">
+        {% if alarmes %}
+            {% for alarme in alarmes %}
+            <div class="alarm-card {{ alarme.tipo }}">
+                <div class="alarm-icon {{ alarme.tipo }}">
+                    <i class="fas fa-{{ 'temperature-high' if 'temp' in alarme.id else 'bolt' if 'corr' in alarme.id else 'exclamation-triangle' }}"></i>
+                </div>
+                <div class="alarm-content">
+                    <div class="alarm-title">{{ alarme.equipamento }}</div>
+                    <div class="alarm-desc">{{ alarme.mensagem }}</div>
+                    <div class="alarm-meta">
+                        <span><i class="fas fa-building"></i> {{ alarme.sala }}</span>
+                        <span><i class="fas fa-chart-line"></i> Valor: {{ alarme.valor }} | Limite: {{ alarme.limite }}</span>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <span class="alarm-badge {{ alarme.tipo }}">{{ alarme.tipo|upper }}</span>
+                    <div class="alarm-time" style="margin-top:8px;">{{ alarme.data }}</div>
+                </div>
+                <button class="btn-ack" onclick="ackAlarm('{{ alarme.id }}')">
+                    <i class="fas fa-check"></i> OK
+                </button>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-alarmes">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Sistema Operacional</h3>
+                <p>Nenhum alarme ativo no momento. Todos os equipamentos estão dentro dos parâmetros normais.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="section-card" style="margin-top:20px;">
+    <div class="section-header">
+        <div class="section-title">
+            <div class="section-icon icon-cargas">
+                <i class="fas fa-sliders-h"></i>
+            </div>
+            <div>
+                <h3>LIMITES CONFIGURADOS</h3>
+                <span>Parâmetros para disparo de alarmes</span>
+            </div>
+        </div>
+    </div>
+    <div style="padding:20px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:20px;">
+            <div style="background:rgba(255,255,255,0.03);padding:15px;border-radius:8px;">
+                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">
+                    <i class="fas fa-thermometer-half"></i> TEMPERATURA MÁXIMA
+                </div>
+                <div style="font-size:24px;font-weight:700;color:var(--accent-orange);">{{ configuracoes.temp_max }} °C</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">Alerta quando ultrapassar</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);padding:15px;border-radius:8px;">
+                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">
+                    <i class="fas fa-bolt"></i> CORRENTE MÁXIMA
+                </div>
+                <div style="font-size:24px;font-weight:700;color:var(--accent-cyan);">{{ configuracoes.corrente_max }} A</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">Proteção contra sobrecarga</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);padding:15px;border-radius:8px;">
+                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">
+                    <i class="fas fa-minus"></i> TENSÃO MÍNIMA
+                </div>
+                <div style="font-size:24px;font-weight:700;color:var(--accent-yellow);">{{ configuracoes.tensao_min }} V</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">Alerta de queda de tensão</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);padding:15px;border-radius:8px;">
+                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">
+                    <i class="fas fa-plus"></i> TENSÃO MÁXIMA
+                </div>
+                <div style="font-size:24px;font-weight:700;color:var(--accent-red);">{{ configuracoes.tensao_max }} V</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">Proteção contra sobretensão</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function ackAlarm(alarmId) {
+    if (confirm('Confirmar que este alarme foi verificado?')) {
+        // Aqui você pode fazer uma requisição para marcar como resolvido
+        alert('Alarme ' + alarmId + ' marcado como verificado!');
+        location.reload();
+    }
+}
+
+// Atualizar contagem de alarmes em tempo real
+setInterval(() => {
+    fetch('/api/alarmes')
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('alarme-badge').textContent = data.total;
+            document.getElementById('notif-badge').textContent = data.total;
+        });
+}, 5000);
+</script>
+{% endblock %}
